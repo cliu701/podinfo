@@ -15,6 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -25,14 +28,14 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build & push image (tag = commit sha)
+      - name: Build & push image (multi-arch)
         run: |
           docker buildx build \
-            --platform linux/amd64 \
+            --platform linux/amd64,linux/arm64 \
             -t "$IMAGE:$TAG" \
             --push .
 
-      - name: Bump env repo (update newTag)
+      - name: Bump env repo (update newTag only)
         env:
           GH_PAT: ${{ secrets.ENV_REPO_PAT }}
         run: |
@@ -41,8 +44,8 @@ jobs:
           git config --global user.email "bot@cliu701"
           git clone "https://cliu701:${GH_PAT}@github.com/${ENV_REPO}.git" env
           cd "env/${DEV_KUSTOMIZE_PATH}"
-          sed -i 's#name: .*#name: '"$IMAGE"'#' kustomization.yaml || true
-          sed -i 's#newTag:.*#newTag: "'"${TAG}"'"#' kustomization.yaml || true
+          sed -i 's#newTag:.*#newTag: "'"${TAG}"'"#' kustomization.yaml
           git add -A
           git commit -m "dev: deploy ${IMAGE}:${TAG} from ${GITHUB_SHA}" || echo "No changes"
           git push origin main
+
