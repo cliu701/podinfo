@@ -1,11 +1,8 @@
 name: build-and-bump-dev
 on:
   push:
-    branches: ["main"]
-
-permissions:
-  contents: write     # to push to env repo
-  packages: write     # to push to GHCR
+    branches: ["master","main"]
+  workflow_dispatch: {}
 
 jobs:
   build-publish-bump:
